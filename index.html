@@ -616,7 +616,35 @@
             
             // Simpan ke localStorage
             simpanKeStorage();
+    async function simpanData() {
+        const kategori = document.getElementById('kategori').value;
+        const subkategori = document.getElementById('subkategori').value.trim();
+        const tahun = document.getElementById('tahun').value;
+        const nilai = parseFloat(document.getElementById('nilai').value);
 
+    if (!kategori || !subkategori || !tahun || isNaN(nilai) || nilai < 0) {
+        showAlert('Mohon lengkapi semua field dengan benar!', true);
+        return;
+    }
+
+    // Simpan ke Supabase
+    const { data, error } = await supabase
+        .from('keuangan')
+        .insert([
+            { kategori, subkategori, tahun: parseInt(tahun), nilai }
+        ]);
+
+    if (error) {
+        console.error(error);
+        showAlert('Gagal simpan ke database!', true);
+        return;
+    }
+
+    showAlert(`Data ${subkategori} tahun ${tahun} berhasil disimpan ke Supabase!`);
+
+    // Refresh data dari Supabase biar chart update
+    await muatDataDariSupabase();
+}
             // Update chart dan summary
             updateAllCharts();
             updateSummary();
