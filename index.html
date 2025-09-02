@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard BPPKAD Blora</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * {
             margin: 0;
@@ -176,6 +177,40 @@
             border: 1px solid #e9ecef;
         }
 
+        .delete-section {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border: 1px solid #e9ecef;
+            margin-bottom: 30px;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s;
+            justify-self: center;
+            max-width: 200px;
+        }
+
+        .btn-danger:hover {
+            background: linear-gradient(135deg, #c0392b, #a93226);
+            transform: translateY(-2px);
+        }
+
+        .btn-danger:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         .summary-title {
             font-size: 1.4rem;
             color: #2c3e50;
@@ -226,6 +261,39 @@
             font-weight: bold;
         }
 
+        .loading {
+            display: none;
+            text-align: center;
+            color: #666;
+            margin: 20px 0;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .connection-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .connection-status.connected {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .connection-status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 10px;
@@ -246,11 +314,15 @@
     </style>
 </head>
 <body>
+    <div class="connection-status" id="connectionStatus">Connecting...</div>
+    
     <div class="container">
         <header>
             <h1>Dashboard BPPKAD Blora</h1>
             <p class="subtitle">Badan Pengelolaan Pendapatan, Keuangan dan Aset Daerah</p>
         </header>
+
+        <div class="loading" id="loadingData">Memuat data...</div>
 
         <div class="charts-container">
             <div class="chart-card">
@@ -316,7 +388,40 @@
                 </div>
             </div>
             
-            <button class="btn" onclick="simpanData()">Simpan Data</button>
+            <button class="btn" onclick="simpanData()" id="btnSimpan">Simpan Data</button>
+        </div>
+
+        <div class="delete-section">
+            <h2 class="form-title">Hapus Data</h2>
+            <div class="alert" id="deleteAlert"></div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="deleteKategori">Kategori:</label>
+                    <select id="deleteKategori" onchange="updateDeleteSubkategori()" required>
+                        <option value="">Pilih Kategori</option>
+                        <option value="pendapatan">Pendapatan</option>
+                        <option value="belanja">Belanja</option>
+                        <option value="pembiayaan">Pembiayaan</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="deleteSubkategori">Subkategori:</label>
+                    <select id="deleteSubkategori" onchange="updateDeleteTahun()" required disabled>
+                        <option value="">Pilih subkategori</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="deleteTahun">Tahun:</label>
+                    <select id="deleteTahun" required disabled>
+                        <option value="">Pilih Tahun</option>
+                    </select>
+                </div>
+            </div>
+            
+            <button class="btn-danger" onclick="hapusData()" id="btnHapus">Hapus Data</button>
         </div>
 
         <div class="data-summary">
@@ -328,25 +433,32 @@
     </div>
 
     <script>
-        // Konfigurasi subkategori
-        const subkategoriData = {
-            pendapatan: [
-                'Pajak Daerah',
-                'Retribusi Daerah', 
-                'Lain-lain Pendapatan'
-            ],
-            belanja: [
-                'Belanja Pegawai',
-                'Belanja Barang/Jasa',
-                'Belanja Modal'
-            ],
-            pembiayaan: [
-                'Penerimaan Pembiayaan',
-                'Pengeluaran Pembiayaan'
-            ]
-        };
+        // ===== KONFIGURASI SUPABASE =====
+        // GANTI DENGAN URL DAN API KEY ANDA DARI SUPABASE
+        const SUPABASE_URL = 'YOUR_SUPABASE_URL_HERE';
+        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY_HERE';
 
-        // Data storage
+        // Inisialisasi Supabase client
+        let supabase;
+        let isSupabaseConnected = false;
+
+        // Cek apakah konfigurasi Supabase sudah diisi
+        if (SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE' && SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY_HERE') {
+            try {
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                isSupabaseConnected = true;
+                updateConnectionStatus('connected');
+                console.log('Supabase connected successfully');
+            } catch (error) {
+                console.error('Error connecting to Supabase:', error);
+                updateConnectionStatus('disconnected');
+            }
+        } else {
+            console.warn('Supabase configuration not found. Please update SUPABASE_URL and SUPABASE_ANON_KEY');
+            updateConnectionStatus('disconnected');
+        }
+
+        // ===== KONFIGURASI APLIKASI =====
         const tahunLabels = ['2017', '2018', '2019', '2020', '2021', '2022', '2023', '2024'];
         let dataKeuangan = {
             pendapatan: {},
@@ -357,15 +469,129 @@
         // Chart instances
         let charts = {};
 
-        // Color schemes untuk setiap kategori
-        const colorSchemes = {
-            pendapatan: ['#3498db', '#2980b9', '#1abc9c'],
-            belanja: ['#e74c3c', '#c0392b', '#e67e22'],
-            pembiayaan: ['#f39c12', '#d68910']
-        };
+        // ===== FUNGSI SUPABASE =====
+        function updateConnectionStatus(status) {
+            const statusElement = document.getElementById('connectionStatus');
+            if (status === 'connected') {
+                statusElement.textContent = 'Online Database';
+                statusElement.className = 'connection-status connected';
+            } else {
+                statusElement.textContent = 'Local Storage';
+                statusElement.className = 'connection-status disconnected';
+            }
+        }
 
-        // Fungsi untuk memuat data dari localStorage
-        function muatData() {
+        async function loadDataFromSupabase() {
+            if (!isSupabaseConnected) return false;
+            
+            try {
+                showLoading(true);
+                const { data, error } = await supabase
+                    .from('data_keuangan')
+                    .select('*')
+                    .order('kategori', { ascending: true })
+                    .order('subkategori', { ascending: true })
+                    .order('tahun', { ascending: true });
+
+                if (error) {
+                    console.error('Error loading data from Supabase:', error);
+                    return false;
+                }
+
+                // Convert data dari Supabase ke format aplikasi
+                dataKeuangan = { pendapatan: {}, belanja: {}, pembiayaan: {} };
+                
+                data.forEach(row => {
+                    if (!dataKeuangan[row.kategori]) {
+                        dataKeuangan[row.kategori] = {};
+                    }
+                    if (!dataKeuangan[row.kategori][row.subkategori]) {
+                        dataKeuangan[row.kategori][row.subkategori] = {};
+                    }
+                    dataKeuangan[row.kategori][row.subkategori][row.tahun] = row.nilai;
+                });
+
+                console.log('Data loaded from Supabase successfully');
+                return true;
+            } catch (error) {
+                console.error('Error loading data from Supabase:', error);
+                return false;
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function saveDataToSupabase(kategori, subkategori, tahun, nilai) {
+            if (!isSupabaseConnected) return false;
+
+            try {
+                // Cek apakah data sudah ada
+                const { data: existingData, error: selectError } = await supabase
+                    .from('data_keuangan')
+                    .select('id')
+                    .eq('kategori', kategori)
+                    .eq('subkategori', subkategori)
+                    .eq('tahun', tahun)
+                    .single();
+
+                if (selectError && selectError.code !== 'PGRST116') {
+                    console.error('Error checking existing data:', selectError);
+                    return false;
+                }
+
+                let result;
+                if (existingData) {
+                    // Update data yang sudah ada
+                    result = await supabase
+                        .from('data_keuangan')
+                        .update({ nilai: nilai, updated_at: new Date().toISOString() })
+                        .eq('id', existingData.id);
+                } else {
+                    // Insert data baru
+                    result = await supabase
+                        .from('data_keuangan')
+                        .insert({ kategori, subkategori, tahun, nilai });
+                }
+
+                if (result.error) {
+                    console.error('Error saving data to Supabase:', result.error);
+                    return false;
+                }
+
+                console.log('Data saved to Supabase successfully');
+                return true;
+            } catch (error) {
+                console.error('Error saving data to Supabase:', error);
+                return false;
+            }
+        }
+
+        async function deleteDataFromSupabase(kategori, subkategori, tahun) {
+            if (!isSupabaseConnected) return false;
+
+            try {
+                const { error } = await supabase
+                    .from('data_keuangan')
+                    .delete()
+                    .eq('kategori', kategori)
+                    .eq('subkategori', subkategori)
+                    .eq('tahun', tahun);
+
+                if (error) {
+                    console.error('Error deleting data from Supabase:', error);
+                    return false;
+                }
+
+                console.log('Data deleted from Supabase successfully');
+                return true;
+            } catch (error) {
+                console.error('Error deleting data from Supabase:', error);
+                return false;
+            }
+        }
+
+        // ===== FUNGSI LOCALSTORAGE (FALLBACK) =====
+        function muatDataDariLocalStorage() {
             const savedData = localStorage.getItem('bppkadDataV2');
             if (savedData) {
                 dataKeuangan = JSON.parse(savedData);
@@ -377,12 +603,20 @@
             }
         }
 
-        // Fungsi untuk menyimpan data ke localStorage
-        function simpanKeStorage() {
+        function simpanKeLocalStorage() {
             localStorage.setItem('bppkadDataV2', JSON.stringify(dataKeuangan));
         }
 
-        // Fungsi untuk format rupiah
+        // ===== FUNGSI UMUM =====
+        function showLoading(show) {
+            const loadingElement = document.getElementById('loadingData');
+            if (show) {
+                loadingElement.classList.add('show');
+            } else {
+                loadingElement.classList.remove('show');
+            }
+        }
+
         function formatRupiah(angka) {
             return new Intl.NumberFormat('id-ID', {
                 style: 'currency',
@@ -392,7 +626,6 @@
             }).format(angka);
         }
 
-        // Fungsi untuk update input subkategori
         function updateSubkategori() {
             const kategori = document.getElementById('kategori').value;
             const subkategoriInput = document.getElementById('subkategori');
@@ -407,13 +640,67 @@
             }
         }
 
-        // Fungsi untuk mendapatkan semua subkategori unik dari data
+        function updateDeleteSubkategori() {
+            const kategori = document.getElementById('deleteKategori').value;
+            const subkategoriSelect = document.getElementById('deleteSubkategori');
+            const tahunSelect = document.getElementById('deleteTahun');
+            
+            // Reset subkategori dan tahun
+            subkategoriSelect.innerHTML = '<option value="">Pilih subkategori</option>';
+            tahunSelect.innerHTML = '<option value="">Pilih Tahun</option>';
+            tahunSelect.disabled = true;
+            
+            if (kategori && dataKeuangan[kategori]) {
+                const subkategoriList = getSubkategoriFromData(kategori);
+                if (subkategoriList.length > 0) {
+                    subkategoriSelect.disabled = false;
+                    subkategoriList.forEach(sub => {
+                        const option = document.createElement('option');
+                        option.value = sub;
+                        option.textContent = sub;
+                        subkategoriSelect.appendChild(option);
+                    });
+                } else {
+                    subkategoriSelect.disabled = true;
+                }
+            } else {
+                subkategoriSelect.disabled = true;
+            }
+        }
+
+        function updateDeleteTahun() {
+            const kategori = document.getElementById('deleteKategori').value;
+            const subkategori = document.getElementById('deleteSubkategori').value;
+            const tahunSelect = document.getElementById('deleteTahun');
+            
+            tahunSelect.innerHTML = '<option value="">Pilih Tahun</option>';
+            
+            if (kategori && subkategori && dataKeuangan[kategori] && dataKeuangan[kategori][subkategori]) {
+                const availableTahun = Object.keys(dataKeuangan[kategori][subkategori]).filter(tahun => 
+                    dataKeuangan[kategori][subkategori][tahun] !== undefined
+                );
+                
+                if (availableTahun.length > 0) {
+                    tahunSelect.disabled = false;
+                    availableTahun.sort().forEach(tahun => {
+                        const option = document.createElement('option');
+                        option.value = tahun;
+                        option.textContent = `${tahun} - ${formatRupiah(dataKeuangan[kategori][subkategori][tahun])}`;
+                        tahunSelect.appendChild(option);
+                    });
+                } else {
+                    tahunSelect.disabled = true;
+                }
+            } else {
+                tahunSelect.disabled = true;
+            }
+        }
+
         function getSubkategoriFromData(kategori) {
             if (!dataKeuangan[kategori]) return [];
             return Object.keys(dataKeuangan[kategori]);
         }
 
-        // Fungsi untuk membuat chart
         function buatChart(canvasId, kategori) {
             const ctx = document.getElementById(canvasId).getContext('2d');
             
@@ -529,14 +816,12 @@
             });
         }
 
-        // Fungsi untuk update semua chart
         function updateAllCharts() {
             buatChart('pendapatanChart', 'pendapatan');
             buatChart('belanjaChart', 'belanja');
             buatChart('pembiayaanChart', 'pembiayaan');
         }
 
-        // Fungsi untuk update ringkasan data
         function updateSummary() {
             const summaryGrid = document.getElementById('summaryGrid');
             summaryGrid.innerHTML = '';
@@ -573,9 +858,8 @@
             });
         }
 
-        // Fungsi untuk menampilkan alert
-        function showAlert(message, isError = false) {
-            const alertDiv = document.getElementById('alert');
+        function showAlert(message, isError = false, targetId = 'alert') {
+            const alertDiv = document.getElementById(targetId);
             alertDiv.textContent = message;
             alertDiv.className = isError ? 'alert error show' : 'alert show';
             
@@ -584,8 +868,7 @@
             }, 3000);
         }
 
-        // Fungsi untuk menyimpan data
-        function simpanData() {
+        async function simpanData() {
             const kategori = document.getElementById('kategori').value;
             const subkategori = document.getElementById('subkategori').value.trim();
             const tahun = document.getElementById('tahun').value;
@@ -603,60 +886,128 @@
                 return;
             }
 
-            // Pastikan struktur data ada
-            if (!dataKeuangan[kategori]) {
-                dataKeuangan[kategori] = {};
+            // Disable button sementara
+            const btnSimpan = document.getElementById('btnSimpan');
+            btnSimpan.disabled = true;
+            btnSimpan.textContent = 'Menyimpan...';
+
+            try {
+                // Pastikan struktur data ada
+                if (!dataKeuangan[kategori]) {
+                    dataKeuangan[kategori] = {};
+                }
+                if (!dataKeuangan[kategori][subkategori]) {
+                    dataKeuangan[kategori][subkategori] = {};
+                }
+
+                // Simpan data ke memori lokal
+                dataKeuangan[kategori][subkategori][tahun] = nilai;
+
+                // Coba simpan ke Supabase
+                if (isSupabaseConnected) {
+                    const success = await saveDataToSupabase(kategori, subkategori, tahun, nilai);
+                    if (!success) {
+                        showAlert('Data disimpan secara lokal. Koneksi database bermasalah.', false);
+                    } else {
+                        showAlert(`Data ${subkategori} tahun ${tahun} berhasil disimpan ke database!`);
+                    }
+                } else {
+                    showAlert(`Data ${subkategori} tahun ${tahun} disimpan secara lokal.`);
+                }
+
+                // Simpan juga ke localStorage sebagai backup
+                simpanKeLocalStorage();
+
+                // Update chart dan summary
+                updateAllCharts();
+                updateSummary();
+
+                // Reset form
+                document.getElementById('kategori').value = '';
+                document.getElementById('subkategori').disabled = true;
+                document.getElementById('subkategori').placeholder = 'Tulis nama subkategori';
+                document.getElementById('tahun').value = '';
+                document.getElementById('nilai').value = '';
+                document.getElementById('subkategori').value = '';
+
+            } catch (error) {
+                console.error('Error saving data:', error);
+                showAlert('Terjadi kesalahan saat menyimpan data!', true);
+            } finally {
+                // Enable button kembali
+                btnSimpan.disabled = false;
+                btnSimpan.textContent = 'Simpan Data';
             }
-            if (!dataKeuangan[kategori][subkategori]) {
-                dataKeuangan[kategori][subkategori] = {};
+        }
+
+        async function hapusData() {
+            const kategori = document.getElementById('deleteKategori').value;
+            const subkategori = document.getElementById('deleteSubkategori').value;
+            const tahun = document.getElementById('deleteTahun').value;
+
+            // Validasi
+            if (!kategori || !subkategori || !tahun) {
+                showAlert('Mohon pilih semua field untuk hapus data!', true, 'deleteAlert');
+                return;
             }
 
-            // Simpan data
-            dataKeuangan[kategori][subkategori][tahun] = nilai;
-            
-    async function simpanData() {
-        const kategori = document.getElementById('kategori').value;
-        const subkategori = document.getElementById('subkategori').value.trim();
-        const tahun = document.getElementById('tahun').value;
-        const nilai = parseFloat(document.getElementById('nilai').value);
+            // Konfirmasi hapus
+            const nilaiData = dataKeuangan[kategori][subkategori][tahun];
+            if (!confirm(`Apakah Anda yakin ingin menghapus data:\n\nKategori: ${kategori}\nSubkategori: ${subkategori}\nTahun: ${tahun}\nNilai: ${formatRupiah(nilaiData)}\n\nData yang dihapus tidak dapat dikembalikan!`)) {
+                return;
+            }
 
-    if (!kategori || !subkategori || !tahun || isNaN(nilai) || nilai < 0) {
-        showAlert('Mohon lengkapi semua field dengan benar!', true);
-        return;
-    }
+            // Disable button sementara
+            const btnHapus = document.getElementById('btnHapus');
+            btnHapus.disabled = true;
+            btnHapus.textContent = 'Menghapus...';
 
-    // Simpan ke Supabase
-    const { data, error } = await supabase
-        .from('keuangan')
-        .insert([
-            { kategori, subkategori, tahun: parseInt(tahun), nilai }
-        ]);
+            try {
+                // Hapus data dari memori lokal
+                delete dataKeuangan[kategori][subkategori][tahun];
 
-    if (error) {
-        console.error(error);
-        showAlert('Gagal simpan ke database!', true);
-        return;
-    }
+                // Jika subkategori sudah kosong, hapus juga subkategorinya
+                if (Object.keys(dataKeuangan[kategori][subkategori]).length === 0) {
+                    delete dataKeuangan[kategori][subkategori];
+                }
 
-    showAlert(`Data ${subkategori} tahun ${tahun} berhasil disimpan ke Supabase!`);
+                // Coba hapus dari Supabase
+                if (isSupabaseConnected) {
+                    const success = await deleteDataFromSupabase(kategori, subkategori, tahun);
+                    if (!success) {
+                        showAlert('Data dihapus secara lokal. Koneksi database bermasalah.', false, 'deleteAlert');
+                    } else {
+                        showAlert(`Data ${subkategori} tahun ${tahun} berhasil dihapus dari database!`, false, 'deleteAlert');
+                    }
+                } else {
+                    showAlert(`Data ${subkategori} tahun ${tahun} dihapus secara lokal.`, false, 'deleteAlert');
+                }
 
-    // Refresh data dari Supabase biar chart update
-    await muatDataDariSupabase();
-}
-            // Update chart dan summary
-            updateAllCharts();
-            updateSummary();
+                // Simpan juga ke localStorage sebagai backup
+                simpanKeLocalStorage();
 
-            // Show success message
-            showAlert(`Data ${subkategori} tahun ${tahun} berhasil disimpan!`);
+                // Update chart dan summary
+                updateAllCharts();
+                updateSummary();
+                
+                // Update dropdown delete
+                updateDeleteSubkategori();
 
-            // Reset form
-            document.getElementById('kategori').value = '';
-            document.getElementById('subkategori').disabled = true;
-            document.getElementById('subkategori').placeholder = 'Tulis nama subkategori';
-            document.getElementById('tahun').value = '';
-            document.getElementById('nilai').value = '';
-            document.getElementById('subkategori').value = '';
+                // Reset form delete
+                document.getElementById('deleteKategori').value = '';
+                document.getElementById('deleteSubkategori').innerHTML = '<option value="">Pilih subkategori</option>';
+                document.getElementById('deleteSubkategori').disabled = true;
+                document.getElementById('deleteTahun').innerHTML = '<option value="">Pilih Tahun</option>';
+                document.getElementById('deleteTahun').disabled = true;
+
+            } catch (error) {
+                console.error('Error deleting data:', error);
+                showAlert('Terjadi kesalahan saat menghapus data!', true, 'deleteAlert');
+            } finally {
+                // Enable button kembali
+                btnHapus.disabled = false;
+                btnHapus.textContent = 'Hapus Data';
+            }
         }
 
         // Event listeners
@@ -667,39 +1018,19 @@
         });
 
         // Inisialisasi saat halaman dimuat
-window.addEventListener('DOMContentLoaded', function() {
-    muatDataDariSupabase();
-});
-        window.addEventListener('DOMContentLoaded', function() {
-            muatData();
-            async function muatDataDariSupabase() {
-    const { data, error } = await supabase
-        .from('keuangan')
-        .select('*');
-
-    if (error) {
-        console.error(error);
-        return;
-    }
-
-    // Reset struktur
-    dataKeuangan = { pendapatan: {}, belanja: {}, pembiayaan: {} };
-
-    data.forEach(row => {
-        if (!dataKeuangan[row.kategori][row.subkategori]) {
-            dataKeuangan[row.kategori][row.subkategori] = {};
-        }
-        dataKeuangan[row.kategori][row.subkategori][row.tahun] = row.nilai;
-    });
-
-    updateAllCharts();
-    updateSummary();
-}
-
+        window.addEventListener('DOMContentLoaded', async function() {
+            // Coba muat data dari Supabase dulu
+            const supabaseLoaded = await loadDataFromSupabase();
+            
+            // Jika gagal muat dari Supabase, muat dari localStorage
+            if (!supabaseLoaded) {
+                muatDataDariLocalStorage();
+                console.log('Data loaded from localStorage as fallback');
+            }
+            
             updateAllCharts();
             updateSummary();
         });
     </script>
 </body>
 </html>
-
