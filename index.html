@@ -614,8 +614,6 @@
             // Simpan data
             dataKeuangan[kategori][subkategori][tahun] = nilai;
             
-            // Simpan ke localStorage
-            simpanKeStorage();
     async function simpanData() {
         const kategori = document.getElementById('kategori').value;
         const subkategori = document.getElementById('subkategori').value.trim();
@@ -669,8 +667,35 @@
         });
 
         // Inisialisasi saat halaman dimuat
+window.addEventListener('DOMContentLoaded', function() {
+    muatDataDariSupabase();
+});
         window.addEventListener('DOMContentLoaded', function() {
             muatData();
+            async function muatDataDariSupabase() {
+    const { data, error } = await supabase
+        .from('keuangan')
+        .select('*');
+
+    if (error) {
+        console.error(error);
+        return;
+    }
+
+    // Reset struktur
+    dataKeuangan = { pendapatan: {}, belanja: {}, pembiayaan: {} };
+
+    data.forEach(row => {
+        if (!dataKeuangan[row.kategori][row.subkategori]) {
+            dataKeuangan[row.kategori][row.subkategori] = {};
+        }
+        dataKeuangan[row.kategori][row.subkategori][row.tahun] = row.nilai;
+    });
+
+    updateAllCharts();
+    updateSummary();
+}
+
             updateAllCharts();
             updateSummary();
         });
