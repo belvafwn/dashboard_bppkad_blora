@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Pembelanjaan - BPPKAD Blora</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/supabase-js/2.38.0/supabase.min.js"></script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <div class="logo">B</div>
+                <div class="brand-text">
+                    <h1>BPPKAD Blora</h1>
+                    <p>Data Pembelanjaan</p>
+                </div>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html" class="nav-link">Beranda</a></li>
+                <li><a href="pendapatan.html" class="nav-link">Pendapatan</a></li>
+                <li><a href="pembelanjaan.html" class="nav-link active">Pembelanjaan</a></li>
+                <li><a href="pembiayaan.html" class="nav-link">Pembiayaan</a></li>
+                <li><a href="admin.html" class="nav-link admin-link">Admin</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Header -->
+        <div class="page-header">
+            <h1>Data Pembelanjaan</h1>
+            <p class="subtitle">Realisasi Pembelanjaan APBD 2017-2024</p>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="summary-cards">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Total Pembelanjaan</h3>
+                </div>
+                <div class="card-body">
+                    <p class="amount" id="categoryTotal">Rp 0</p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h3>Jumlah Subkategori</h3>
+                </div>
+                <div class="card-body">
+                    <p class="amount" id="subcategoriesCount">0</p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h3>Total Entri Data</h3>
+                </div>
+                <div class="card-body">
+                    <p class="amount" id="entriesCount">0</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Category Chart -->
+        <div class="category-charts">
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h2>Realisasi Pembelanjaan per Subkategori</h2>
+                    <p>Total realisasi untuk setiap subkategori pembelanjaan</p>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Subcategory Charts -->
+        <div class="subcategory-charts" id="subcategoryCharts">
+            <!-- Subcategory charts will be generated here -->
+        </div>
+
+        <!-- Yearly Comparison -->
+        <div class="chart-container">
+            <div class="chart-header">
+                <h2>Perbandingan Tahunan</h2>
+                <p>Perkembangan realisasi pembelanjaan per tahun</p>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="yearlyComparisonChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="form-container">
+            <div class="btn-group">
+                <button type="button" class="btn btn-primary" onclick="exportCurrentPageData()">
+                    Export Data Pembelanjaan
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="refreshCategoryData()">
+                    Refresh Data
+                </button>
+            </div>
+        </div>
+
+        <!-- Data Table -->
+        <div class="data-section">
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h2>Tabel Data Pembelanjaan</h2>
+                    <p>Detail semua data realisasi pembelanjaan</p>
+                </div>
+                <div id="dataTable">
+                    <div class="loading">Memuat data...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <p>&copy; 2024 BPPKAD Kabupaten Blora. Data Pembelanjaan.</p>
+        </div>
+    </footer>
+
+    <!-- Loading Overlay -->
+    <div id="loading" class="loading-overlay hidden">
+        <div class="loading-spinner"></div>
+        <p>Memuat data pembelanjaan...</p>
+    </div>
+
+    <script src="js/supabase.js"></script>
+    <script src="js/script.js"></script>
+    <script>
+        // Page-specific functions for Pembelanjaan
+        
+        /**
+         * Refresh category data
+         */
+        async function refreshCategoryData() {
+            await initCategoryPage('Pembelanjaan');
+            showSuccess('Data pembelanjaan berhasil di-refresh!');
+        }
+
+        /**
+         * Create yearly comparison chart
+         */
+        async function createYearlyComparisonChart() {
+            const data = await fetchDataByCategory('Pembelanjaan');
+            
+            if (data.length === 0) return;
+            
+            // Group data by subcategory and year
+            const subcategories = [...new Set(data.map(item => item.subkategori))];
+            const years = [...new Set(data.map(item => item.tahun))].sort();
+            
+            const datasets = subcategories.slice(0, 5).map((subcat, index) => {
+                const subcatData = data.filter(item => item.subkategori === subcat);
+                const yearlyValues = years.map(year => {
+                    const yearData = subcatData.filter(item => item.tahun === year);
+                    return yearData.reduce((sum, item) => sum + (parseFloat(item.nilai) || 0), 0);
+                });
+                
+                const colors = ['#dc3545', '#c82333', '#a71e2a', '#8b1821', '#6f1318'];
+                
+                return {
+                    label: subcat,
+                    data: yearlyValues,
+                    backgroundColor: colors[index] + '40',
+                    borderColor: colors[index],
+                    borderWidth: 3,
+                    fill: false,
+                    tension: 0.4
+                };
+            });
+
+            const ctx = document.getElementById('yearlyComparisonChart').getContext('2d');
+            const chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: years,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                boxWidth: 12,
+                                padding: 15
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + formatCurrency(context.raw);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return formatCurrencyShort(value);
+                                }
+                            },
+                            grid: {
+                                color: '#e5e7eb'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+
+            currentCharts.push(chart);
+        }
+
+        /**
+         * Initialize pembelanjaan page with custom yearly comparison
+         */
+        async function initPembelanjaanPage() {
+            try {
+                showLoading();
+                
+                // Fetch data for Pembelanjaan category
+                const data = await fetchDataByCategory('Pembelanjaan');
+                
+                if (data.length === 0) {
+                    showWarning('Tidak ada data pembelanjaan yang tersedia.');
+                    return;
+                }
+                
+                // Update page summary
+                updateCategoryPageSummary(data, 'Pembelanjaan');
+                
+                // Create main category chart
+                createCategoryChart(data, 'Pembelanjaan', 'categoryChart');
+                
+                // Create subcategory charts
+                createSubcategoryCharts(data);
+                
+                // Create yearly comparison chart
+                createYearlyComparisonChart();
+                
+                // Create data table
+                createDataTable(data, 'dataTable');
+                
+            } catch (error) {
+                console.error('Error initializing Pembelanjaan page:', error);
+                showError('Gagal memuat data pembelanjaan.');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Initialize page when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            initPembelanjaanPage();
+        });
+
+        // Cleanup when page unloads
+        window.addEventListener('beforeunload', function() {
+            destroyExistingCharts();
+        });
+    </script>
+</body>
+</html>
