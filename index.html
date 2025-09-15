@@ -4,1539 +4,341 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BPPKAD Blora - Realisasi APBD 2017-2024</title>
+    <link rel="stylesheet" href="css/style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        /* Reset dan Base Styles */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background-color: #f8f9fa;
-        }
-
-        /* Header */
-        header {
-            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
-            color: white;
-            padding: 1.5rem 0;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .header-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 2rem;
-        }
-
-        .logo h1 {
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-        }
-
-        .logo p {
-            font-size: 1.1rem;
-            opacity: 0.9;
-            font-weight: 300;
-        }
-
-        /* Navigation */
-        .navbar {
-            background-color: #fff;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
-
-        .nav-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 2rem;
-        }
-
-        .nav-links {
-            list-style: none;
-            display: flex;
-            align-items: center;
-            gap: 0;
-            flex-wrap: wrap;
-        }
-
-        .nav-links li a {
-            display: block;
-            padding: 1rem 1.5rem;
-            text-decoration: none;
-            color: #374151;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            border-bottom: 3px solid transparent;
-            cursor: pointer;
-        }
-
-        .nav-links li a:hover,
-        .nav-links li a.active {
-            color: #1e3a8a;
-            border-bottom-color: #1e3a8a;
-            background-color: #f8fafc;
-        }
-
-        .nav-links li a.admin-link {
-            color: #dc2626;
-            margin-left: auto;
-        }
-
-        .nav-links li a.admin-link:hover {
-            color: #991b1b;
-            border-bottom-color: #dc2626;
-        }
-
-        /* Main Content */
-        .main-content {
-            min-height: calc(100vh - 200px);
-            padding: 2rem 0;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 2rem;
-        }
-
-        .page-title {
-            text-align: center;
-            margin-bottom: 3rem;
-        }
-
-        .page-title h2 {
-            font-size: 2.5rem;
-            color: #1e3a8a;
-            margin-bottom: 1rem;
-        }
-
-        .page-title p {
-            font-size: 1.2rem;
-            color: #6b7280;
-        }
-
-        /* Stats Cards */
-        .stats-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-            margin-bottom: 3rem;
-        }
-
-        .card {
-            background: white;
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
-            border: 1px solid #e5e7eb;
-            text-align: center;
-            transition: transform 0.2s ease;
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-        }
-
-        .card h3 {
-            font-size: 1.1rem;
-            color: #6b7280;
-            margin-bottom: 1rem;
-            font-weight: 500;
-        }
-
-        .stat-value {
-            font-size: 2rem;
-            font-weight: 700;
-            color: #1e3a8a;
-        }
-
-        /* Chart Section */
-        .chart-section {
-            margin-bottom: 3rem;
-        }
-
-        .chart-container {
-            background: white;
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
-            border: 1px solid #e5e7eb;
-        }
-
-        .chart-container h3 {
-            margin-bottom: 1.5rem;
-            color: #1e3a8a;
-            font-size: 1.5rem;
-            text-align: center;
-        }
-
-        .chart-container canvas {
-            max-height: 400px;
-        }
-
-        /* Form Styles */
-        .form-section {
-            background: white;
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
-            border: 1px solid #e5e7eb;
-            margin-bottom: 3rem;
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: #374151;
-            font-weight: 500;
-        }
-
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: border-color 0.3s ease;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1rem;
-        }
-
-        .form-group small {
-            display: block;
-            margin-top: 0.25rem;
-            color: #6b7280;
-            font-size: 0.875rem;
-        }
-
-        /* Buttons */
-        .btn {
-            display: inline-block;
-            padding: 0.75rem 1.5rem;
-            background-color: #3b82f6;
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
-            border: none;
-            font-size: 1rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-            margin-right: 0.5rem;
-        }
-
-        .btn:hover {
-            background-color: #2563eb;
-        }
-
-        .btn-danger {
-            background-color: #dc2626;
-        }
-
-        .btn-danger:hover {
-            background-color: #b91c1c;
-        }
-
-        .btn-success {
-            background-color: #059669;
-        }
-
-        .btn-success:hover {
-            background-color: #047857;
-        }
-
-        .btn-small {
-            padding: 0.5rem 1rem;
-            font-size: 0.875rem;
-        }
-
-        /* Tabs */
-        .tabs {
-            display: flex;
-            border-bottom: 2px solid #e5e7eb;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-        }
-
-        .tab-btn {
-            background: none;
-            border: none;
-            padding: 1rem 1.5rem;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: 500;
-            color: #6b7280;
-            border-bottom: 3px solid transparent;
-            transition: all 0.3s ease;
-        }
-
-        .tab-btn:hover {
-            color: #1e3a8a;
-            background-color: #f8fafc;
-        }
-
-        .tab-btn.active {
-            color: #1e3a8a;
-            border-bottom-color: #1e3a8a;
-            background-color: #f8fafc;
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        .tab-content h4 {
-            margin-bottom: 1.5rem;
-            color: #1e3a8a;
-            font-size: 1.25rem;
-        }
-
-        /* Data Table */
-        .data-table {
-            background: white;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
-            border: 1px solid #e5e7eb;
-            overflow-x: auto;
-        }
-
-        .data-table table {
-            width: 100%;
-            border-collapse: collapse;
-            min-width: 800px;
-        }
-
-        .data-table th,
-        .data-table td {
-            padding: 1rem;
-            text-align: left;
-            border-bottom: 1px solid #e5e7eb;
-        }
-
-        .data-table th {
-            background-color: #f9fafb;
-            font-weight: 600;
-            color: #374151;
-        }
-
-        .data-table tr:hover {
-            background-color: #f9fafb;
-        }
-
-        /* Alert Messages */
-        .alert {
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-        }
-
-        .alert-success {
-            background-color: #d1fae5;
-            border: 1px solid #a7f3d0;
-            color: #065f46;
-        }
-
-        .alert-error {
-            background-color: #fee2e2;
-            border: 1px solid #fecaca;
-            color: #991b1b;
-        }
-
-        .alert-info {
-            background-color: #dbeafe;
-            border: 1px solid #93c5fd;
-            color: #1e40af;
-        }
-
-        /* Loading Spinner */
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #3b82f6;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* Footer */
-        footer {
-            background-color: #1f2937;
-            color: white;
-            text-align: center;
-            padding: 2rem 0;
-            margin-top: 4rem;
-        }
-
-        .footer-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 2rem;
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .nav-links {
-                flex-direction: column;
-                gap: 0;
-            }
-            
-            .nav-links li {
-                width: 100%;
-            }
-            
-            .nav-links li a {
-                padding: 0.75rem 1rem;
-            }
-            
-            .stats-cards {
-                grid-template-columns: 1fr;
-                gap: 1rem;
-            }
-            
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-            
-            .container {
-                padding: 0 1rem;
-            }
-            
-            .page-title h2 {
-                font-size: 2rem;
-            }
-            
-            .chart-container {
-                padding: 1rem;
-            }
-
-            .tabs {
-                flex-direction: column;
-            }
-
-            .tab-btn {
-                padding: 0.75rem 1rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .logo h1 {
-                font-size: 1.5rem;
-            }
-            
-            .logo p {
-                font-size: 1rem;
-            }
-            
-            .page-title h2 {
-                font-size: 1.75rem;
-            }
-            
-            .stat-value {
-                font-size: 1.5rem;
-            }
-        }
-
-        /* Utility Classes */
-        .text-center { text-align: center; }
-        .text-right { text-align: right; }
-        .mb-1 { margin-bottom: 0.5rem; }
-        .mb-2 { margin-bottom: 1rem; }
-        .mb-3 { margin-bottom: 1.5rem; }
-        .mt-1 { margin-top: 0.5rem; }
-        .mt-2 { margin-top: 1rem; }
-        .mt-3 { margin-top: 1.5rem; }
-        .hidden { display: none; }
-        .block { display: block; }
-        .inline-block { display: inline-block; }
-    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/supabase-js/2.38.0/supabase.min.js"></script>
 </head>
 <body>
-    <header>
-        <div class="header-content">
-            <div class="logo">
-                <h1>BPPKAD Kabupaten Blora</h1>
-                <p id="headerSubtitle">Realisasi APBD 2017-2024</p>
-            </div>
-        </div>
-    </header>
-
+    <!-- Navigation -->
     <nav class="navbar">
-        <div class="nav-content">
-            <ul class="nav-links">
-                <li><a href="#" onclick="showPage('dashboard')" class="nav-link active">Dashboard</a></li>
-                <li><a href="#" onclick="showPage('pendapatan')" class="nav-link">Pendapatan</a></li>
-                <li><a href="#" onclick="showPage('pembelanjaan')" class="nav-link">Pembelanjaan</a></li>
-                <li><a href="#" onclick="showPage('pembiayaan')" class="nav-link">Pembiayaan</a></li>
-                <li><a href="#" onclick="showPage('admin')" class="nav-link admin-link">Admin</a></li>
+        <div class="nav-container">
+            <div class="nav-brand">
+                <div class="logo">B</div>
+                <div class="brand-text">
+                    <h1>BPPKAD Blora</h1>
+                    <p>Badan Pengelolaan Pendapatan, Keuangan dan Aset Daerah</p>
+                </div>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html" class="nav-link active">Beranda</a></li>
+                <li><a href="pendapatan.html" class="nav-link">Pendapatan</a></li>
+                <li><a href="pembelanjaan.html" class="nav-link">Pembelanjaan</a></li>
+                <li><a href="pembiayaan.html" class="nav-link">Pembiayaan</a></li>
+                <li><a href="admin.html" class="nav-link admin-link">Admin</a></li>
             </ul>
         </div>
     </nav>
 
-    <main class="main-content">
-        <div class="container">
-            
-            <!-- Dashboard Page -->
-            <div id="dashboardPage" class="page-content active">
-                <div class="page-title">
-                    <h2>Dashboard Realisasi APBD</h2>
-                    <p>Ringkasan data realisasi APBD Kabupaten Blora tahun 2017-2024</p>
-                </div>
-
-                <div class="stats-cards">
-                    <div class="card">
-                        <h3>Total Pendapatan</h3>
-                        <div class="stat-value" id="totalPendapatan">-</div>
-                    </div>
-                    <div class="card">
-                        <h3>Total Pembelanjaan</h3>
-                        <div class="stat-value" id="totalPembelanjaan">-</div>
-                    </div>
-                    <div class="card">
-                        <h3>Total Pembiayaan</h3>
-                        <div class="stat-value" id="totalPembiayaan">-</div>
-                    </div>
-                </div>
-
-                <div class="chart-section">
-                    <div class="chart-container">
-                        <h3>Ringkasan APBD per Kategori</h3>
-                        <canvas id="summaryChart"></canvas>
-                    </div>
-                </div>
-
-                <div class="chart-section">
-                    <div class="chart-container">
-                        <h3>Trend Realisasi APBD 2017-2024</h3>
-                        <canvas id="trendChart"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Pendapatan Page -->
-            <div id="pendapatanPage" class="page-content hidden">
-                <div class="page-title">
-                    <h2>Data Pendapatan APBD</h2>
-                    <p>Realisasi pendapatan daerah Kabupaten Blora tahun 2017-2024</p>
-                </div>
-
-                <div class="stats-cards">
-                    <div class="card">
-                        <h3>Total Anggaran</h3>
-                        <div class="stat-value" id="pendapatanAnggaran">-</div>
-                    </div>
-                    <div class="card">
-                        <h3>Total Realisasi</h3>
-                        <div class="stat-value" id="pendapatanRealisasi">-</div>
-                    </div>
-                    <div class="card">
-                        <h3>Persentase Capaian</h3>
-                        <div class="stat-value" id="pendapatanPersentase">-</div>
-                    </div>
-                </div>
-
-                <div class="chart-section">
-                    <div class="chart-container">
-                        <h3>Realisasi Pendapatan per Subkategori</h3>
-                        <canvas id="pendapatanChart"></canvas>
-                    </div>
-                </div>
-
-                <div class="chart-section">
-                    <div class="chart-container">
-                        <h3>Trend Pendapatan 2017-2024</h3>
-                        <canvas id="pendapatanTrendChart"></canvas>
-                    </div>
-                </div>
-
-                <div class="chart-section">
-                    <h3>Detail Data Pendapatan</h3>
-                    <div id="pendapatanTable">
-                        <div class="text-center">
-                            <span class="loading"></span> Memuat data...
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Pembelanjaan Page -->
-            <div id="pembelanjaanPage" class="page-content hidden">
-                <div class="page-title">
-                    <h2>Data Pembelanjaan APBD</h2>
-                    <p>Realisasi pembelanjaan daerah Kabupaten Blora tahun 2017-2024</p>
-                </div>
-
-                <div class="stats-cards">
-                    <div class="card">
-                        <h3>Total Anggaran</h3>
-                        <div class="stat-value" id="pembelanjaanAnggaran">-</div>
-                    </div>
-                    <div class="card">
-                        <h3>Total Realisasi</h3>
-                        <div class="stat-value" id="pembelanjaanRealisasi">-</div>
-                    </div>
-                    <div class="card">
-                        <h3>Persentase Capaian</h3>
-                        <div class="stat-value" id="pembelanjaanPersentase">-</div>
-                    </div>
-                </div>
-
-                <div class="chart-section">
-                    <div class="chart-container">
-                        <h3>Realisasi Pembelanjaan per Subkategori</h3>
-                        <canvas id="pembelanjaanChart"></canvas>
-                    </div>
-                </div>
-
-                <div class="chart-section">
-                    <div class="chart-container">
-                        <h3>Trend Pembelanjaan 2017-2024</h3>
-                        <canvas id="pembelanjaanTrendChart"></canvas>
-                    </div>
-                </div>
-
-                <div class="chart-section">
-                    <h3>Detail Data Pembelanjaan</h3>
-                    <div id="pembelanjaanTable">
-                        <div class="text-center">
-                            <span class="loading"></span> Memuat data...
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Pembiayaan Page -->
-            <div id="pembiayaanPage" class="page-content hidden">
-                <div class="page-title">
-                    <h2>Data Pembiayaan APBD</h2>
-                    <p>Realisasi pembiayaan daerah Kabupaten Blora tahun 2017-2024</p>
-                </div>
-
-                <div class="stats-cards">
-                    <div class="card">
-                        <h3>Total Anggaran</h3>
-                        <div class="stat-value" id="pembiayaanAnggaran">-</div>
-                    </div>
-                    <div class="card">
-                        <h3>Total Realisasi</h3>
-                        <div class="stat-value" id="pembiayaanRealisasi">-</div>
-                    </div>
-                    <div class="card">
-                        <h3>Persentase Capaian</h3>
-                        <div class="stat-value" id="pembiayaanPersentase">-</div>
-                    </div>
-                </div>
-
-                <div class="chart-section">
-                    <div class="chart-container">
-                        <h3>Realisasi Pembiayaan per Subkategori</h3>
-                        <canvas id="pembiayaanChart"></canvas>
-                    </div>
-                </div>
-
-                <div class="chart-section">
-                    <div class="chart-container">
-                        <h3>Trend Pembiayaan 2017-2024</h3>
-                        <canvas id="pembiayaanTrendChart"></canvas>
-                    </div>
-                </div>
-
-                <div class="chart-section">
-                    <h3>Detail Data Pembiayaan</h3>
-                    <div id="pembiayaanTable">
-                        <div class="text-center">
-                            <span class="loading"></span> Memuat data...
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Admin Page -->
-            <div id="adminPage" class="page-content hidden">
-                <div class="page-title">
-                    <h2>Panel Administrasi</h2>
-                    <p>Kelola data realisasi APBD Kabupaten Blora</p>
-                </div>
-
-                <!-- Form Input Data -->
-                <div class="form-section">
-                    <h3>Tambah Data APBD</h3>
-                    <form id="apbdForm">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="kategori">Kategori *</label>
-                                <select name="kategori" id="kategori" required>
-                                    <option value="">Pilih Kategori</option>
-                                    <option value="Pendapatan">Pendapatan</option>
-                                    <option value="Pembelanjaan">Pembelanjaan</option>
-                                    <option value="Pembiayaan">Pembiayaan</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="tahun">Tahun *</label>
-                                <select name="tahun" id="tahun" required>
-                                    <option value="">Pilih Tahun</option>
-                                    <option value="2017">2017</option>
-                                    <option value="2018">2018</option>
-                                    <option value="2019">2019</option>
-                                    <option value="2020">2020</option>
-                                    <option value="2021">2021</option>
-                                    <option value="2022">2022</option>
-                                    <option value="2023">2023</option>
-                                    <option value="2024">2024</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="subkategori">Subkategori *</label>
-                            <input type="text" name="subkategori" id="subkategori" placeholder="Masukkan nama subkategori" required>
-                            <small>Contoh: Pajak Daerah, Retribusi Daerah, Dana Perimbangan, dll.</small>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="isi_subkategori">Isi/Rincian Subkategori</label>
-                            <input type="text" name="isi_subkategori" id="isi_subkategori" placeholder="Masukkan rincian subkategori (opsional)">
-                            <small>Contoh: Pajak Bumi dan Bangunan, Pajak Kendaraan Bermotor, dll.</small>
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="anggaran">Anggaran (Rupiah)</label>
-                                <input type="number" name="anggaran" id="anggaran" placeholder="0" step="0.01">
-                            </div>
-                            <div class="form-group">
-                                <label for="realisasi">Realisasi (Rupiah)</label>
-                                <input type="number" name="realisasi" id="realisasi" placeholder="0" step="0.01">
-                            </div>
-                        </div>
-
-                        <button type="submit" class="btn btn-success">Tambah Data</button>
-                        <button type="reset" class="btn">Reset Form</button>
-                    </form>
-                </div>
-
-                <!-- Data Tables -->
-                <div class="chart-section">
-                    <h3>Kelola Data Existing</h3>
-                    
-                    <!-- Tabs -->
-                    <div class="tabs">
-                        <button class="tab-btn active" onclick="showAdminTab('pendapatan-tab')">Pendapatan</button>
-                        <button class="tab-btn" onclick="showAdminTab('pembelanjaan-tab')">Pembelanjaan</button>
-                        <button class="tab-btn" onclick="showAdminTab('pembiayaan-tab')">Pembiayaan</button>
-                    </div>
-
-                    <!-- Tab Contents -->
-                    <div id="pendapatan-tab" class="tab-content active">
-                        <h4>Data Pendapatan</h4>
-                        <div id="adminPendapatanTable">
-                            <div class="text-center">
-                                <span class="loading"></span> Memuat data...
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="pembelanjaan-tab" class="tab-content">
-                        <h4>Data Pembelanjaan</h4>
-                        <div id="adminPembelanjaanTable">
-                            <div class="text-center">
-                                <span class="loading"></span> Memuat data...
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="pembiayaan-tab" class="tab-content">
-                        <h4>Data Pembiayaan</h4>
-                        <div id="adminPembiayaanTable">
-                            <div class="text-center">
-                                <span class="loading"></span> Memuat data...
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Statistics -->
-                <div class="stats-cards">
-                    <div class="card">
-                        <h3>Total Data</h3>
-                        <div class="stat-value" id="totalData">-</div>
-                    </div>
-                    <div class="card">
-                        <h3>Data Terbaru</h3>
-                        <div class="stat-value" id="latestData">-</div>
-                    </div>
-                    <div class="card">
-                        <h3>Terakhir Diupdate</h3>
-                        <div class="stat-value" id="lastUpdate">-</div>
-                    </div>
-                </div>
-            </div>
-
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Header -->
+        <div class="page-header">
+            <h1>Realisasi APBD Kabupaten Blora</h1>
+            <p class="subtitle">Tahun Anggaran 2017 - 2024</p>
         </div>
-    </main>
 
-    <footer>
+        <!-- Summary Cards -->
+        <div class="summary-cards">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Total Pendapatan</h3>
+                </div>
+                <div class="card-body">
+                    <p class="amount" id="total-pendapatan">Rp 0</p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h3>Total Pembelanjaan</h3>
+                </div>
+                <div class="card-body">
+                    <p class="amount" id="total-pembelanjaan">Rp 0</p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h3>Total Pembiayaan</h3>
+                </div>
+                <div class="card-body">
+                    <p class="amount" id="total-pembiayaan">Rp 0</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="charts-section">
+            <!-- Summary Chart -->
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h2>Ringkasan Realisasi APBD</h2>
+                    <p>Perbandingan total realisasi per kategori</p>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="summaryChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Trend Chart -->
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h2>Tren Realisasi per Tahun</h2>
+                    <p>Perkembangan realisasi APBD dari tahun 2017-2024</p>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="stats-section">
+            <h2>Statistik Cepat</h2>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-number" id="total-entries">0</div>
+                    <div class="stat-label">Total Entri Data</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="year-range">2017-2024</div>
+                    <div class="stat-label">Rentang Tahun</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="categories-count">3</div>
+                    <div class="stat-label">Kategori Utama</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="subcategories-count">0</div>
+                    <div class="stat-label">Subkategori</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
         <div class="footer-content">
-            <p>&copy; 2024 BPPKAD Kabupaten Blora. Hak Cipta Dilindungi.</p>
+            <p>&copy; 2024 BPPKAD Kabupaten Blora. Semua hak cipta dilindungi.</p>
+            <p>Sistem Informasi Realisasi APBD</p>
         </div>
     </footer>
 
+    <!-- Loading Overlay -->
+    <div id="loading" class="loading-overlay">
+        <div class="loading-spinner"></div>
+        <p>Memuat data...</p>
+    </div>
+
+    <script src="js/supabase.js"></script>
+    <script src="js/script.js"></script>
     <script>
-        // Supabase Configuration - GANTI DENGAN KREDENSIAL ANDA
-        const SUPABASE_URL = 'https://scernchnrrfmdxtqrxrd.supabase.co'; // Ganti dengan URL Supabase Anda
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNjZXJuY2hucnJmbWR4dHFyeHJkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3OTYxNDYsImV4cCI6MjA3MjM3MjE0Nn0.UWUcsuPl5JJ7Batu6PBt4gMyTiosTqTQJ6Ile0eFV_U'; // Ganti dengan Anon Key Supabase Anda
-
-        // Initialize Supabase client
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-        // Database table name
-        const TABLE_NAME = 'apbd_data';
-
-        // Global variables
-        let currentChart = null;
-        let currentData = [];
-        let allData = [];
-
-        // Utility Functions
-        function formatRupiah(amount) {
-            if (!amount || amount === 0) return 'Rp 0';
-            
-            const number = parseFloat(amount);
-            if (isNaN(number)) return 'Rp 0';
-            
-            // Convert to billions if amount is large
-            if (number >= 1000000000) {
-                return 'Rp ' + (number / 1000000000).toFixed(1) + ' M';
-            } else if (number >= 1000000) {
-                return 'Rp ' + (number / 1000000).toFixed(1) + ' Jt';
-            } else if (number >= 1000) {
-                return 'Rp ' + (number / 1000).toFixed(0) + ' Rb';
-            }
-            
-            return 'Rp ' + number.toLocaleString('id-ID');
-        }
-
-        function showAlert(message, type = 'info') {
-            const alertDiv = document.createElement('div');
-            alertDiv.className = `alert alert-${type}`;
-            alertDiv.textContent = message;
-            
-            const mainContent = document.querySelector('.main-content .container');
-            if (mainContent) {
-                mainContent.insertBefore(alertDiv, mainContent.firstChild);
-                
-                setTimeout(() => {
-                    alertDiv.remove();
-                }, 5000);
-            }
-        }
-
-        // Navigation Functions
-        function showPage(pageName) {
-            // Hide all pages
-            document.querySelectorAll('.page-content').forEach(page => {
-                page.classList.add('hidden');
-                page.classList.remove('active');
-            });
-            
-            // Remove active from all nav links
-            document.querySelectorAll('.nav-link').forEach(link => {
-                link.classList.remove('active');
-            });
-            
-            // Show selected page
-            const targetPage = document.getElementById(pageName + 'Page');
-            if (targetPage) {
-                targetPage.classList.remove('hidden');
-                targetPage.classList.add('active');
-            }
-            
-            // Add active to clicked nav link
-            event.target.classList.add('active');
-            
-            // Update header subtitle
-            const subtitleMap = {
-                'dashboard': 'Realisasi APBD 2017-2024',
-                'pendapatan': 'Realisasi Pendapatan APBD 2017-2024',
-                'pembelanjaan': 'Realisasi Pembelanjaan APBD 2017-2024',
-                'pembiayaan': 'Realisasi Pembiayaan APBD 2017-2024',
-                'admin': 'Panel Administrasi - Realisasi APBD 2017-2024'
-            };
-            
-            document.getElementById('headerSubtitle').textContent = subtitleMap[pageName];
-            
-            // Load page specific data
-            loadPageData(pageName);
-        }
-
-        // Admin Tab Functions
-        function showAdminTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            
-            document.getElementById(tabId).classList.add('active');
-            event.target.classList.add('active');
-        }
-
-        // Database Functions
-        async function addApbdData(data) {
-            try {
-                const { data: result, error } = await supabase
-                    .from(TABLE_NAME)
-                    .insert([{
-                        kategori: data.kategori,
-                        subkategori: data.subkategori,
-                        isi_subkategori: data.isi_subkategori || null,
-                        tahun: parseInt(data.tahun),
-                        anggaran: parseFloat(data.anggaran) || 0,
-                        realisasi: parseFloat(data.realisasi) || 0
-                    }])
-                    .select();
-
-                if (error) throw error;
-                return result[0];
-            } catch (error) {
-                console.error('Error adding APBD data:', error);
-                throw error;
-            }
-        }
-
-        async function getAllData() {
-            try {
-                const { data, error } = await supabase
-                    .from(TABLE_NAME)
-                    .select('*')
-                    .order('created_at', { ascending: false });
-
-                if (error) throw error;
-                allData = data || [];
-                return allData;
-            } catch (error) {
-                console.error('Error fetching all data:', error);
-                return [];
-            }
-        }
-
-        async function getDataByCategory(kategori) {
-            try {
-                const { data, error } = await supabase
-                    .from(TABLE_NAME)
-                    .select('*')
-                    .eq('kategori', kategori)
-                    .order('tahun', { ascending: true });
-
-                if (error) throw error;
-                return data || [];
-            } catch (error) {
-                console.error('Error fetching data by category:', error);
-                return [];
-            }
-        }
-
-        async function deleteApbdData(id) {
-            try {
-                const { error } = await supabase
-                    .from(TABLE_NAME)
-                    .delete()
-                    .eq('id', id);
-
-                if (error) throw error;
-                return true;
-            } catch (error) {
-                console.error('Error deleting APBD data:', error);
-                throw error;
-            }
-        }
-
-        // Chart Functions
-        function createBarChart(canvasId, data, options = {}) {
-            const ctx = document.getElementById(canvasId);
-            if (!ctx) return null;
-            
-            if (currentChart && currentChart.canvas.id === canvasId) {
-                currentChart.destroy();
-            }
-            
-            const defaultOptions = {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'top',
-                    },
-                    title: {
-                        display: !!options.title,
-                        text: options.title || ''
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function(value) {
-                                return formatRupiah(value);
-                            }
-                        }
-                    },
-                    x: {
-                        ticks: {
-                            maxRotation: 45,
-                            minRotation: 0
-                        }
-                    }
-                }
-            };
-            
-            const chartOptions = { ...defaultOptions, ...options.chartOptions };
-            
-            const chart = new Chart(ctx, {
-                type: 'bar',
-                data: data,
-                options: chartOptions
-            });
-            
-            return chart;
-        }
-
-        function createLineChart(canvasId, data, options = {}) {
-            const ctx = document.getElementById(canvasId);
-            if (!ctx) return null;
-            
-            if (currentChart && currentChart.canvas.id === canvasId) {
-                currentChart.destroy();
-            }
-            
-            const defaultOptions = {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'top',
-                    },
-                    title: {
-                        display: !!options.title,
-                        text: options.title || ''
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function(value) {
-                                return formatRupiah(value);
-                            }
-                        }
-                    }
-                }
-            };
-            
-            const chartOptions = { ...defaultOptions, ...options.chartOptions };
-            
-            const chart = new Chart(ctx, {
-                type: 'line',
-                data: data,
-                options: chartOptions
-            });
-            
-            return chart;
-        }
-
-        // Data Processing Functions
-        function processDataForChart(data, kategori) {
-            if (!data || data.length === 0) return null;
-            
-            const groupedData = {};
-            data.forEach(item => {
-                if (item.kategori === kategori) {
-                    const key = item.subkategori;
-                    if (!groupedData[key]) {
-                        groupedData[key] = {
-                            anggaran: 0,
-                            realisasi: 0,
-                            items: []
-                        };
-                    }
-                    groupedData[key].anggaran += parseFloat(item.anggaran || 0);
-                    groupedData[key].realisasi += parseFloat(item.realisasi || 0);
-                    groupedData[key].items.push(item);
-                }
-            });
-            
-            const labels = Object.keys(groupedData);
-            const anggaranData = labels.map(label => groupedData[label].anggaran);
-            const realisasiData = labels.map(label => groupedData[label].realisasi);
-            
-            return {
-                labels: labels,
-                datasets: [
-                    {
-                        label: 'Anggaran',
-                        data: anggaranData,
-                        backgroundColor: 'rgba(54, 162, 235, 0.8)',
-                        borderColor: 'rgba(54, 162, 235, 1)',
-                        borderWidth: 1
-                    },
-                    {
-                        label: 'Realisasi',
-                        data: realisasiData,
-                        backgroundColor: 'rgba(75, 192, 192, 0.8)',
-                        borderColor: 'rgba(75, 192, 192, 1)',
-                        borderWidth: 1
-                    }
-                ]
-            };
-        }
-
-        function processDataForTrendChart(data, kategori) {
-            if (!data || data.length === 0) return null;
-            
-            const years = [2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024];
-            const filteredData = data.filter(item => item.kategori === kategori);
-            
-            const yearlyData = {};
-            years.forEach(year => {
-                yearlyData[year] = {
-                    anggaran: 0,
-                    realisasi: 0
-                };
-            });
-            
-            filteredData.forEach(item => {
-                const year = parseInt(item.tahun);
-                if (yearlyData[year]) {
-                    yearlyData[year].anggaran += parseFloat(item.anggaran || 0);
-                    yearlyData[year].realisasi += parseFloat(item.realisasi || 0);
-                }
-            });
-            
-            const anggaranData = years.map(year => yearlyData[year].anggaran);
-            const realisasiData = years.map(year => yearlyData[year].realisasi);
-            
-            return {
-                labels: years,
-                datasets: [
-                    {
-                        label: 'Anggaran',
-                        data: anggaranData,
-                        borderColor: 'rgba(54, 162, 235, 1)',
-                        backgroundColor: 'rgba(54, 162, 235, 0.1)',
-                        fill: false,
-                        tension: 0.1
-                    },
-                    {
-                        label: 'Realisasi',
-                        data: realisasiData,
-                        borderColor: 'rgba(75, 192, 192, 1)',
-                        backgroundColor: 'rgba(75, 192, 192, 0.1)',
-                        fill: false,
-                        tension: 0.1
-                    }
-                ]
-            };
-        }
-
-        // Data Table Functions
-        function createDataTable(containerId, data, kategori) {
-            const container = document.getElementById(containerId);
-            if (!container) return;
-            
-            const filteredData = data.filter(item => item.kategori === kategori);
-            
-            if (filteredData.length === 0) {
-                container.innerHTML = `
-                    <div class="alert alert-info">
-                        Belum ada data untuk kategori ${kategori}
-                    </div>
-                `;
-                return;
-            }
-            
-            let tableHTML = `
-                <div class="data-table">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Tahun</th>
-                                <th>Subkategori</th>
-                                <th>Isi Subkategori</th>
-                                <th>Anggaran</th>
-                                <th>Realisasi</th>
-                                <th>Persentase</th>
-                                <th>Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-            `;
-            
-            filteredData.forEach(item => {
-                const anggaran = parseFloat(item.anggaran || 0);
-                const realisasi = parseFloat(item.realisasi || 0);
-                const persentase = anggaran > 0 ? ((realisasi / anggaran) * 100).toFixed(2) : 0;
-                
-                tableHTML += `
-                    <tr>
-                        <td>${item.tahun}</td>
-                        <td>${item.subkategori}</td>
-                        <td>${item.isi_subkategori || '-'}</td>
-                        <td>${formatRupiah(anggaran)}</td>
-                        <td>${formatRupiah(realisasi)}</td>
-                        <td>${persentase}%</td>
-                        <td>
-                            <button class="btn btn-danger btn-small" onclick="confirmDelete(${item.id})">
-                                Hapus
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            });
-            
-            tableHTML += `
-                        </tbody>
-                    </table>
-                </div>
-            `;
-            
-            container.innerHTML = tableHTML;
-        }
-
-        // Delete Functions
-        async function confirmDelete(id) {
-            if (confirm('Apakah Anda yakin ingin menghapus data ini?')) {
-                try {
-                    await deleteApbdData(id);
-                    showAlert('Data berhasil dihapus!', 'success');
-                    
-                    setTimeout(() => {
-                        loadAllData();
-                    }, 1000);
-                    
-                } catch (error) {
-                    showAlert('Gagal menghapus data: ' + error.message, 'error');
-                }
-            }
-        }
-
-        // Page Loading Functions
-        async function loadPageData(pageName) {
-            try {
-                switch(pageName) {
-                    case 'dashboard':
-                        await loadDashboardData();
-                        break;
-                    case 'pendapatan':
-                        await loadCategoryData('Pendapatan');
-                        break;
-                    case 'pembelanjaan':
-                        await loadCategoryData('Pembelanjaan');
-                        break;
-                    case 'pembiayaan':
-                        await loadCategoryData('Pembiayaan');
-                        break;
-                    case 'admin':
-                        await loadAdminData();
-                        break;
-                }
-            } catch (error) {
-                console.error('Error loading page data:', error);
-                showAlert('Gagal memuat data: ' + error.message, 'error');
-            }
-        }
-
-        async function loadDashboardData() {
-            try {
-                const data = await getAllData();
-                updateDashboardStats(data);
-                createDashboardSummaryChart(data);
-                createDashboardTrendChart(data);
-            } catch (error) {
-                console.error('Error loading dashboard data:', error);
-            }
-        }
-
-        async function loadCategoryData(kategori) {
-            try {
-                const data = await getDataByCategory(kategori);
-                updateCategoryStats(data, kategori);
-                createCategoryChart(data, kategori);
-                createCategoryTrendChart(data, kategori);
-                createDataTable(kategori.toLowerCase() + 'Table', data, kategori);
-            } catch (error) {
-                console.error('Error loading category data:', error);
-            }
-        }
-
-        async function loadAdminData() {
-            try {
-                const data = await getAllData();
-                updateAdminStats(data);
-                createDataTable('adminPendapatanTable', data, 'Pendapatan');
-                createDataTable('adminPembelanjaanTable', data, 'Pembelanjaan');
-                createDataTable('adminPembiayaanTable', data, 'Pembiayaan');
-            } catch (error) {
-                console.error('Error loading admin data:', error);
-            }
-        }
-
-        async function loadAllData() {
-            try {
-                await getAllData();
-                
-                // Refresh current page
-                const activePage = document.querySelector('.nav-link.active');
-                if (activePage) {
-                    const pageName = activePage.textContent.toLowerCase().replace(' ', '');
-                    const pageMap = {
-                        'dashboard': 'dashboard',
-                        'pendapatan': 'pendapatan',
-                        'pembelanjaan': 'pembelanjaan',
-                        'pembiayaan': 'pembiayaan',
-                        'admin': 'admin'
-                    };
-                    
-                    if (pageMap[pageName]) {
-                        await loadPageData(pageMap[pageName]);
-                    }
-                }
-            } catch (error) {
-                console.error('Error loading all data:', error);
-            }
-        }
-
-        // Dashboard Functions
-        function updateDashboardStats(data) {
-            const pendapatan = data.filter(item => item.kategori === 'Pendapatan');
-            const pembelanjaan = data.filter(item => item.kategori === 'Pembelanjaan');
-            const pembiayaan = data.filter(item => item.kategori === 'Pembiayaan');
-
-            const totalPendapatan = pendapatan.reduce((sum, item) => sum + (parseFloat(item.realisasi) || 0), 0);
-            const totalPembelanjaan = pembelanjaan.reduce((sum, item) => sum + (parseFloat(item.realisasi) || 0), 0);
-            const totalPembiayaan = pembiayaan.reduce((sum, item) => sum + (parseFloat(item.realisasi) || 0), 0);
-
-            document.getElementById('totalPendapatan').textContent = formatRupiah(totalPendapatan);
-            document.getElementById('totalPembelanjaan').textContent = formatRupiah(totalPembelanjaan);
-            document.getElementById('totalPembiayaan').textContent = formatRupiah(totalPembiayaan);
-        }
-
-        function createDashboardSummaryChart(data) {
-            const categories = ['Pendapatan', 'Pembelanjaan', 'Pembiayaan'];
-            const chartData = categories.map(kategori => {
-                const items = data.filter(item => item.kategori === kategori);
-                return items.reduce((sum, item) => sum + (parseFloat(item.realisasi) || 0), 0);
-            });
-
-            const chartConfig = {
-                labels: categories,
-                datasets: [{
-                    label: 'Realisasi (Rupiah)',
-                    data: chartData,
-                    backgroundColor: [
-                        'rgba(54, 162, 235, 0.8)',
-                        'rgba(255, 99, 132, 0.8)',
-                        'rgba(75, 192, 192, 0.8)'
-                    ],
-                    borderColor: [
-                        'rgba(54, 162, 235, 1)',
-                        'rgba(255, 99, 132, 1)',
-                        'rgba(75, 192, 192, 1)'
-                    ],
-                    borderWidth: 1
-                }]
-            };
-
-            createBarChart('summaryChart', chartConfig, {
-                title: 'Ringkasan APBD per Kategori'
-            });
-        }
-
-        function createDashboardTrendChart(data) {
-            const years = [2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024];
-            const categories = ['Pendapatan', 'Pembelanjaan', 'Pembiayaan'];
-            
-            const datasets = categories.map((kategori, index) => {
-                const colors = [
-                    'rgba(54, 162, 235, 1)',
-                    'rgba(255, 99, 132, 1)',
-                    'rgba(75, 192, 192, 1)'
-                ];
-                
-                const yearlyData = years.map(year => {
-                    const items = data.filter(item => item.kategori === kategori && parseInt(item.tahun) === year);
-                    return items.reduce((sum, item) => sum + (parseFloat(item.realisasi) || 0), 0);
-                });
-
-                return {
-                    label: kategori,
-                    data: yearlyData,
-                    borderColor: colors[index],
-                    backgroundColor: colors[index].replace('1)', '0.1)'),
-                    fill: false,
-                    tension: 0.1
-                };
-            });
-
-            const chartConfig = {
-                labels: years,
-                datasets: datasets
-            };
-
-            createLineChart('trendChart', chartConfig, {
-                title: 'Trend Realisasi APBD 2017-2024'
-            });
-        }
-
-        // Category Functions
-        function updateCategoryStats(data, kategori) {
-            const totalAnggaran = data.reduce((sum, item) => sum + (parseFloat(item.anggaran) || 0), 0);
-            const totalRealisasi = data.reduce((sum, item) => sum + (parseFloat(item.realisasi) || 0), 0);
-            const persentase = totalAnggaran > 0 ? ((totalRealisasi / totalAnggaran) * 100).toFixed(2) : 0;
-            
-            document.getElementById(kategori.toLowerCase() + 'Anggaran').textContent = formatRupiah(totalAnggaran);
-            document.getElementById(kategori.toLowerCase() + 'Realisasi').textContent = formatRupiah(totalRealisasi);
-            document.getElementById(kategori.toLowerCase() + 'Persentase').textContent = persentase + '%';
-        }
-
-        function createCategoryChart(data, kategori) {
-            const chartData = processDataForChart(data, kategori);
-            if (chartData) {
-                createBarChart(kategori.toLowerCase() + 'Chart', chartData, {
-                    title: `Perbandingan Anggaran vs Realisasi ${kategori}`
-                });
-            }
-        }
-
-        function createCategoryTrendChart(data, kategori) {
-            const chartData = processDataForTrendChart(data, kategori);
-            if (chartData) {
-                createLineChart(kategori.toLowerCase() + 'TrendChart', chartData, {
-                    title: `Trend ${kategori} dari Tahun ke Tahun`
-                });
-            }
-        }
-
-        // Admin Functions
-        function updateAdminStats(data) {
-            document.getElementById('totalData').textContent = data.length;
-            
-            if (data.length > 0) {
-                const latest = data[0];
-                document.getElementById('latestData').textContent = latest.subkategori || 'N/A';
-                
-                const date = new Date(latest.created_at);
-                const formattedDate = date.toLocaleDateString('id-ID', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric'
-                });
-                document.getElementById('lastUpdate').textContent = formattedDate;
-            } else {
-                document.getElementById('latestData').textContent = 'Belum ada data';
-                document.getElementById('lastUpdate').textContent = '-';
-            }
-        }
-
-        // Form Functions
-        function setupForm() {
-            const form = document.getElementById('apbdForm');
-            if (!form) return;
-            
-            form.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                
-                const formData = new FormData(form);
-                const data = {
-                    kategori: formData.get('kategori'),
-                    subkategori: formData.get('subkategori'),
-                    isi_subkategori: formData.get('isi_subkategori'),
-                    tahun: formData.get('tahun'),
-                    anggaran: formData.get('anggaran'),
-                    realisasi: formData.get('realisasi')
-                };
-                
-                if (!data.kategori || !data.subkategori || !data.tahun) {
-                    showAlert('Kategori, Subkategori, dan Tahun harus diisi!', 'error');
-                    return;
-                }
-                
-                try {
-                    const submitBtn = form.querySelector('button[type="submit"]');
-                    const originalText = submitBtn.textContent;
-                    submitBtn.innerHTML = '<span class="loading"></span> Menyimpan...';
-                    submitBtn.disabled = true;
-                    
-                    await addApbdData(data);
-                    showAlert('Data berhasil ditambahkan!', 'success');
-                    form.reset();
-                    
-                    setTimeout(() => {
-                        loadAllData();
-                    }, 1000);
-                    
-                } catch (error) {
-                    showAlert('Gagal menambahkan data: ' + error.message, 'error');
-                } finally {
-                    const submitBtn = form.querySelector('button[type="submit"]');
-                    submitBtn.textContent = 'Tambah Data';
-                    submitBtn.disabled = false;
-                }
-            });
-        }
-
-        // Initialize
+        // Initialize homepage
         document.addEventListener('DOMContentLoaded', function() {
-            setupForm();
-            loadDashboardData();
-            
-            // Check Supabase configuration
-            if (SUPABASE_URL === 'YOUR_SUPABASE_URL' || SUPABASE_ANON_KEY === 'YOUR_SUPABASE_ANON_KEY') {
-                showAlert('Harap konfigurasi kredensial Supabase terlebih dahulu!', 'error');
-            }
+            initHomePage();
         });
+
+        async function initHomePage() {
+            showLoading();
+            try {
+                await loadSummaryData();
+                await createSummaryCharts();
+            } catch (error) {
+                console.error('Error loading homepage:', error);
+                showError('Gagal memuat data. Periksa koneksi internet Anda.');
+            }
+            hideLoading();
+        }
+
+        async function loadSummaryData() {
+            const data = await fetchAllData();
+            
+            // Calculate totals by category
+            const totals = {
+                pendapatan: 0,
+                pembelanjaan: 0,
+                pembiayaan: 0
+            };
+
+            let totalEntries = 0;
+            const subcategories = new Set();
+
+            data.forEach(item => {
+                const kategori = item.kategori.toLowerCase();
+                const nilai = parseFloat(item.nilai) || 0;
+                
+                if (totals.hasOwnProperty(kategori)) {
+                    totals[kategori] += nilai;
+                }
+                
+                totalEntries++;
+                subcategories.add(item.subkategori);
+            });
+
+            // Update UI
+            document.getElementById('total-pendapatan').textContent = formatCurrency(totals.pendapatan);
+            document.getElementById('total-pembelanjaan').textContent = formatCurrency(totals.pembelanjaan);
+            document.getElementById('total-pembiayaan').textContent = formatCurrency(totals.pembiayaan);
+            document.getElementById('total-entries').textContent = totalEntries;
+            document.getElementById('subcategories-count').textContent = subcategories.size;
+
+            return { totals, data };
+        }
+
+        async function createSummaryCharts() {
+            const { totals, data } = await loadSummaryData();
+
+            // Create summary chart
+            const summaryCtx = document.getElementById('summaryChart').getContext('2d');
+            new Chart(summaryCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Pendapatan', 'Pembelanjaan', 'Pembiayaan'],
+                    datasets: [{
+                        label: 'Realisasi (Rupiah)',
+                        data: [totals.pendapatan, totals.pembelanjaan, totals.pembiayaan],
+                        backgroundColor: ['#28a745', '#dc3545', '#ffc107'],
+                        borderColor: ['#1e7e34', '#c82333', '#e0a800'],
+                        borderWidth: 2,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return formatCurrency(context.raw);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return formatCurrencyShort(value);
+                                }
+                            },
+                            grid: {
+                                color: '#e9ecef'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Create trend chart
+            createTrendChart(data);
+        }
+
+        function createTrendChart(data) {
+            // Group data by year and category
+            const yearlyData = {};
+            
+            data.forEach(item => {
+                const year = item.tahun;
+                const kategori = item.kategori.toLowerCase();
+                const nilai = parseFloat(item.nilai) || 0;
+                
+                if (!yearlyData[year]) {
+                    yearlyData[year] = {
+                        pendapatan: 0,
+                        pembelanjaan: 0,
+                        pembiayaan: 0
+                    };
+                }
+                
+                if (yearlyData[year].hasOwnProperty(kategori)) {
+                    yearlyData[year][kategori] += nilai;
+                }
+            });
+
+            const years = Object.keys(yearlyData).sort();
+            const pendapatanData = years.map(year => yearlyData[year].pendapatan);
+            const pembelanjaanData = years.map(year => yearlyData[year].pembelanjaan);
+            const pembiayaanData = years.map(year => yearlyData[year].pembiayaan);
+
+            const trendCtx = document.getElementById('trendChart').getContext('2d');
+            new Chart(trendCtx, {
+                type: 'line',
+                data: {
+                    labels: years,
+                    datasets: [
+                        {
+                            label: 'Pendapatan',
+                            data: pendapatanData,
+                            borderColor: '#28a745',
+                            backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Pembelanjaan',
+                            data: pembelanjaanData,
+                            borderColor: '#dc3545',
+                            backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Pembiayaan',
+                            data: pembiayaanData,
+                            borderColor: '#ffc107',
+                            backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + formatCurrency(context.raw);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return formatCurrencyShort(value);
+                                }
+                            },
+                            grid: {
+                                color: '#e9ecef'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
     </script>
 </body>
 </html>
