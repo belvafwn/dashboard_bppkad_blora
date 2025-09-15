@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - BPPKAD Blora</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/supabase-js/2.38.0/supabase.min.js"></script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <div class="logo">B</div>
+                <div class="brand-text">
+                    <h1>BPPKAD Blora</h1>
+                    <p>Panel Administrator</p>
+                </div>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html" class="nav-link">Beranda</a></li>
+                <li><a href="pendapatan.html" class="nav-link">Pendapatan</a></li>
+                <li><a href="pembelanjaan.html" class="nav-link">Pembelanjaan</a></li>
+                <li><a href="pembiayaan.html" class="nav-link">Pembiayaan</a></li>
+                <li><a href="admin.html" class="nav-link active admin-link">Admin</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Header -->
+        <div class="page-header">
+            <h1>Panel Administrator</h1>
+            <p class="subtitle">Kelola Data Realisasi APBD</p>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="summary-cards">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Total Data</h3>
+                </div>
+                <div class="card-body">
+                    <p class="amount" id="stat-total">0</p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h3>Data Pendapatan</h3>
+                </div>
+                <div class="card-body">
+                    <p class="amount" id="stat-pendapatan">0</p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h3>Data Pembelanjaan</h3>
+                </div>
+                <div class="card-body">
+                    <p class="amount" id="stat-pembelanjaan">0</p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h3>Data Pembiayaan</h3>
+                </div>
+                <div class="card-body">
+                    <p class="amount" id="stat-pembiayaan">0</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Data Form -->
+        <div class="form-container">
+            <h2>Tambah Data Baru</h2>
+            <form id="adminForm">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="tahun">Tahun</label>
+                        <input type="number" id="tahun" name="tahun" class="form-control" 
+                               min="2017" max="2024" placeholder="2024" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="kategori">Kategori</label>
+                        <select id="kategori" name="kategori" class="form-control" required>
+                            <option value="">Pilih Kategori</option>
+                            <option value="Pendapatan">Pendapatan</option>
+                            <option value="Pembelanjaan">Pembelanjaan</option>
+                            <option value="Pembiayaan">Pembiayaan</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="subkategori">Subkategori</label>
+                    <input type="text" id="subkategori" name="subkategori" class="form-control" 
+                           placeholder="Contoh: Pendapatan Asli Daerah" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="keterangan">Keterangan / Rincian</label>
+                    <input type="text" id="keterangan" name="keterangan" class="form-control" 
+                           placeholder="Contoh: Pajak Daerah, Retribusi, dll" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="nilai">Nilai (Rupiah)</label>
+                    <input type="number" id="nilai" name="nilai" class="form-control" 
+                           placeholder="0" step="0.01" min="0" required>
+                </div>
+                
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary">Simpan Data</button>
+                    <button type="reset" class="btn btn-secondary">Reset Form</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Import/Export Section -->
+        <div class="form-container">
+            <h2>Import / Export Data</h2>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="csvFile">Import CSV</label>
+                    <input type="file" id="csvFile" accept=".csv" class="form-control">
+                    <small style="color: #666; margin-top: 0.5rem; display: block;">
+                        Format CSV: Tahun,Kategori,Subkategori,Keterangan,Nilai
+                    </small>
+                </div>
+                <div class="form-group">
+                    <label>Export Data</label>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-primary" onclick="exportToCSV()">
+                            Export ke CSV
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Management -->
+        <div class="form-container">
+            <h2>Data Management</h2>
+            <div class="btn-group">
+                <button type="button" class="btn btn-primary" onclick="refreshAdminData()">
+                    Refresh Data
+                </button>
+                <button type="button" class="btn btn-danger" onclick="confirmBulkDelete()">
+                    Hapus Semua Data
+                </button>
+            </div>
+        </div>
+
+        <!-- Data Table -->
+        <div class="form-container">
+            <h2>Data Existing</h2>
+            <div id="adminDataTable">
+                <div class="loading">Memuat data...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <p>&copy; 2024 BPPKAD Kabupaten Blora. Panel Administrator.</p>
+        </div>
+    </footer>
+
+    <!-- Loading Overlay -->
+    <div id="loading" class="loading-overlay hidden">
+        <div class="loading-spinner"></div>
+        <p>Memproses...</p>
+    </div>
+
+    <script src="js/supabase.js"></script>
+    <script src="js/script.js"></script>
+    <script>
+        // Admin-specific functions
+        
+        /**
+         * Refresh admin data
+         */
+        async function refreshAdminData() {
+            await loadAdminData();
+            showSuccess('Data berhasil di-refresh!');
+        }
+
+        /**
+         * Confirm bulk delete
+         */
+        function confirmBulkDelete() {
+            const confirmation = prompt(
+                'PERINGATAN: Tindakan ini akan menghapus SEMUA data!\n\n' +
+                'Ketik "HAPUS SEMUA" untuk konfirmasi:'
+            );
+            
+            if (confirmation === 'HAPUS SEMUA') {
+                bulkDeleteAllData();
+            } else {
+                showWarning('Penghapusan dibatalkan.');
+            }
+        }
+
+        /**
+         * Delete all data (bulk delete)
+         */
+        async function bulkDeleteAllData() {
+            try {
+                showLoading();
+                
+                // Get all data IDs
+                const allData = await fetchAllData();
+                const ids = allData.map(item => item.id);
+                
+                if (ids.length === 0) {
+                    showWarning('Tidak ada data untuk dihapus.');
+                    return;
+                }
+                
+                // Delete in batches
+                const result = await deleteMultipleData(ids);
+                
+                if (result.success) {
+                    await loadAdminData();
+                    showSuccess(`${ids.length} data berhasil dihapus!`);
+                }
+                
+            } catch (error) {
+                console.error('Bulk delete error:', error);
+                showError('Gagal menghapus data secara bulk.');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        /**
+         * Handle CSV file import
+         */
+        function handleCSVImport() {
+            const fileInput = document.getElementById('csvFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showWarning('Pilih file CSV terlebih dahulu.');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    const csvText = e.target.result;
+                    const result = await importFromCSV(csvText);
+                    
+                    if (result.success) {
+                        await loadAdminData();
+                        fileInput.value = ''; // Clear file input
+                    }
+                } catch (error) {
+                    console.error('CSV import error:', error);
+                    showError('Gagal mengimport file CSV.');
+                }
+            };
+            
+            reader.readAsText(file);
+        }
+
+        /**
+         * Validate form inputs in real-time
+         */
+        function setupFormValidation() {
+            const form = document.getElementById('adminForm');
+            const inputs = form.querySelectorAll('input, select');
+            
+            inputs.forEach(input => {
+                input.addEventListener('input', function() {
+                    validateFormField(this);
+                });
+                
+                input.addEventListener('blur', function() {
+                    validateFormField(this);
+                });
+            });
+        }
+
+        /**
+         * Validate individual form field
+         */
+        function validateFormField(field) {
+            const value = field.value.trim();
+            let isValid = true;
+            let errorMessage = '';
+            
+            // Clear previous errors
+            clearFieldError(field);
+            
+            // Required field check
+            if (field.hasAttribute('required') && !value) {
+                isValid = false;
+                errorMessage = 'Field ini wajib diisi';
+            }
+            // Specific validations
+            else if (field.name === 'tahun' && value) {
+                const year = parseInt(value);
+                if (isNaN(year) || year < 2017 || year > 2024) {
+                    isValid = false;
+                    errorMessage = 'Tahun harus antara 2017-2024';
+                }
+            }
+            else if (field.name === 'nilai' && value) {
+                const nilai = parseFloat(value);
+                if (isNaN(nilai) || nilai < 0) {
+                    isValid = false;
+                    errorMessage = 'Nilai harus berupa angka positif';
+                }
+            }
+            else if (field.name === 'subkategori' && value && value.length < 3) {
+                isValid = false;
+                errorMessage = 'Subkategori minimal 3 karakter';
+            }
+            else if (field.name === 'keterangan' && value && value.length < 3) {
+                isValid = false;
+                errorMessage = 'Keterangan minimal 3 karakter';
+            }
+            
+            if (!isValid) {
+                showFieldError(field, errorMessage);
+            }
+            
+            return isValid;
+        }
+
+        /**
+         * Show field error
+         */
+        function showFieldError(field, message) {
+            field.style.borderColor = '#ef4444';
+            field.style.backgroundColor = '#fef2f2';
+            
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'field-error';
+            errorDiv.style.color = '#ef4444';
+            errorDiv.style.fontSize = '0.875rem';
+            errorDiv.style.marginTop = '0.25rem';
+            errorDiv.textContent = message;
+            
+            field.parentNode.appendChild(errorDiv);
+        }
+
+        /**
+         * Clear field error
+         */
+        function clearFieldError(field) {
+            field.style.borderColor = '';
+            field.style.backgroundColor = '';
+            
+            const errorDiv = field.parentNode.querySelector('.field-error');
+            if (errorDiv) {
+                errorDiv.remove();
+            }
+        }
+
+        /**
+         * Format number input
+         */
+        function formatNumberInput(input) {
+            input.addEventListener('input', function() {
+                // Remove non-numeric characters except decimal point
+                let value = this.value.replace(/[^\d.]/g, '');
+                
+                // Ensure only one decimal point
+                const parts = value.split('.');
+                if (parts.length > 2) {
+                    value = parts[0] + '.' + parts.slice(1).join('');
+                }
+                
+                this.value = value;
+            });
+        }
+
+        /**
+         * Auto-suggest for subcategory and keterangan
+         */
+        function setupAutoSuggest() {
+            const subkategoriInput = document.getElementById('subkategori');
+            const keteranganInput = document.getElementById('keterangan');
+            
+            // Common subcategories by category
+            const subcategorySuggestions = {
+                'Pendapatan': [
+                    'Pendapatan Asli Daerah',
+                    'Dana Perimbangan',
+                    'Lain-lain Pendapatan Daerah yang Sah'
+                ],
+                'Pembelanjaan': [
+                    'Belanja Operasi',
+                    'Belanja Modal',
+                    'Belanja Tak Terduga'
+                ],
+                'Pembiayaan': [
+                    'Penerimaan Pembiayaan',
+                    'Pengeluaran Pembiayaan'
+                ]
+            };
+            
+            // Setup autocomplete for subcategory
+            const kategoriSelect = document.getElementById('kategori');
+            kategoriSelect.addEventListener('change', function() {
+                const kategori = this.value;
+                const suggestions = subcategorySuggestions[kategori] || [];
+                
+                // Clear previous datalist
+                let datalist = document.getElementById('subkategori-list');
+                if (datalist) datalist.remove();
+                
+                if (suggestions.length > 0) {
+                    datalist = document.createElement('datalist');
+                    datalist.id = 'subkategori-list';
+                    
+                    suggestions.forEach(suggestion => {
+                        const option = document.createElement('option');
+                        option.value = suggestion;
+                        datalist.appendChild(option);
+                    });
+                    
+                    document.body.appendChild(datalist);
+                    subkategoriInput.setAttribute('list', 'subkategori-list');
+                } else {
+                    subkategoriInput.removeAttribute('list');
+                }
+            });
+        }
+
+        /**
+         * Show preview before saving
+         */
+        function showDataPreview(data) {
+            const previewHTML = `
+                <div class="data-preview">
+                    <h3>Preview Data</h3>
+                    <table class="data-table">
+                        <tr><td><strong>Tahun:</strong></td><td>${data.tahun}</td></tr>
+                        <tr><td><strong>Kategori:</strong></td><td>${data.kategori}</td></tr>
+                        <tr><td><strong>Subkategori:</strong></td><td>${data.subkategori}</td></tr>
+                        <tr><td><strong>Keterangan:</strong></td><td>${data.keterangan}</td></tr>
+                        <tr><td><strong>Nilai:</strong></td><td>${formatCurrency(data.nilai)}</td></tr>
+                    </table>
+                    <div class="btn-group" style="margin-top: 1rem;">
+                        <button type="button" class="btn btn-primary" onclick="confirmSaveData()">
+                            Konfirmasi Simpan
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="cancelPreview()">
+                            Batal
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            const previewContainer = document.createElement('div');
+            previewContainer.id = 'data-preview-modal';
+            previewContainer.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+            `;
+            
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                background: white;
+                padding: 2rem;
+                border-radius: 8px;
+                max-width: 500px;
+                width: 90%;
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            `;
+            modal.innerHTML = previewHTML;
+            
+            previewContainer.appendChild(modal);
+            document.body.appendChild(previewContainer);
+        }
+
+        /**
+         * Initialize admin page
+         */
+        document.addEventListener('DOMContentLoaded', function() {
+            // Setup form validation
+            setupFormValidation();
+            
+            // Setup auto-suggest
+            setupAutoSuggest();
+            
+            // Format number inputs
+            const nilaiInput = document.getElementById('nilai');
+            formatNumberInput(nilaiInput);
+            
+            // Setup CSV import
+            const csvFileInput = document.getElementById('csvFile');
+            csvFileInput.addEventListener('change', handleCSVImport);
+            
+            // Setup form reset
+            const resetButton = document.querySelector('button[type="reset"]');
+            resetButton.addEventListener('click', function() {
+                // Clear all field errors
+                const errorDivs = document.querySelectorAll('.field-error');
+                errorDivs.forEach(div => div.remove());
+                
+                // Reset field styles
+                const inputs = document.querySelectorAll('input, select');
+                inputs.forEach(input => {
+                    input.style.borderColor = '';
+                    input.style.backgroundColor = '';
+                });
+                
+                showSuccess('Form berhasil direset.');
+            });
+            
+            console.log('✅ Admin page initialized successfully');
+        });
+
+        // Global variables for data preview
+        let pendingData = null;
+
+        /**
+         * Modified form submit handler with preview
+         */
+        async function handleAdminFormSubmit(event) {
+            event.preventDefault();
+            
+            const formData = new FormData(event.target);
+            const data = {
+                tahun: formData.get('tahun'),
+                kategori: formData.get('kategori'),
+                subkategori: formData.get('subkategori'),
+                keterangan: formData.get('keterangan'),
+                nilai: formData.get('nilai')
+            };
+            
+            // Validate all fields
+            const form = event.target;
+            const inputs = form.querySelectorAll('input, select');
+            let isFormValid = true;
+            
+            inputs.forEach(input => {
+                if (!validateFormField(input)) {
+                    isFormValid = false;
+                }
+            });
+            
+            if (!isFormValid) {
+                showError('Harap perbaiki kesalahan pada form sebelum menyimpan.');
+                return;
+            }
+            
+            // Store data for preview
+            pendingData = data;
+            
+            // Show preview
+            showDataPreview(data);
+        }
+
+        /**
+         * Confirm save data from preview
+         */
+        async function confirmSaveData() {
+            if (!pendingData) return;
+            
+            // Close preview modal
+            const modal = document.getElementById('data-preview-modal');
+            if (modal) modal.remove();
+            
+            // Save data
+            const result = await insertData(pendingData);
+            if (result.success) {
+                // Reset form
+                document.getElementById('adminForm').reset();
+                
+                // Clear field errors
+                const errorDivs = document.querySelectorAll('.field-error');
+                errorDivs.forEach(div => div.remove());
+                
+                // Reset field styles
+                const inputs = document.querySelectorAll('input, select');
+                inputs.forEach(input => {
+                    input.style.borderColor = '';
+                    input.style.backgroundColor = '';
+                });
+                
+                // Reload admin data
+                await loadAdminData();
+                
+                showSuccess('Data berhasil disimpan!');
+            }
+            
+            pendingData = null;
+        }
+
+        /**
+         * Cancel data preview
+         */
+        function cancelPreview() {
+            const modal = document.getElementById('data-preview-modal');
+            if (modal) modal.remove();
+            
+            pendingData = null;
+            showWarning('Penyimpanan data dibatalkan.');
+        }
+
+        // Override the original form submit handler
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('adminForm');
+            if (form) {
+                // Remove existing listeners and add our custom one
+                form.addEventListener('submit', handleAdminFormSubmit);
+            }
+        });
+    </script>
+
+    <style>
+        /* Additional styles for admin page */
+        .data-preview {
+            text-align: left;
+        }
+
+        .data-preview h3 {
+            color: #1a365d;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .data-preview .data-table {
+            margin-bottom: 0;
+        }
+
+        .data-preview .data-table td {
+            padding: 0.75rem;
+        }
+
+        .field-error {
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .form-control:invalid {
+            border-color: #ef4444;
+            background-color: #fef2f2;
+        }
+
+        .form-control:valid {
+            border-color: #10b981;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(75, 85, 99, 0.3);
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .data-preview {
+                padding: 1rem;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</body>
+</html>
